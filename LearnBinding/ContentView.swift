@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Observation  // Needed to implement new style of global state variable
 
 // Binding is always passed from the parent view to the child view
 // That means, a @Binding variable is always created in the child view. The parent view passes one of its variables to the child view as a binding so that the communication is possible between them.
@@ -14,26 +15,39 @@ import SwiftUI
 // Environment Object is basically a global state variable
 
 
-// Pre iOS 17
-class AppState: ObservableObject {
-    @Published var isOn: Bool = false
+//// Pre iOS 17
+//class AppState: ObservableObject {
+//    @Published var isOn: Bool = false
+//}
+
+// Post iOS 17
+@Observable
+class AppState {
+    
+    // all the assigned properties are automatically published. So, no need to wrap with @Published and it is available globally
+    var isOn: Bool = false
 }
 
 
 // child view
 struct LightBulbView: View {
     
-    @EnvironmentObject private var appState: AppState
+    @Environment(AppState.self) private var appState: AppState
     
     var body: some View {
+        
+        @Bindable var appState = appState
+        
         VStack {
             Image(systemName: appState.isOn ? "lightbulb.fill" : "lightbulb")
                 .font(.largeTitle)
                 .foregroundStyle(appState.isOn ? .yellow : .black)
             
-            Button("Toggle") {
-                appState.isOn.toggle()
-            }
+            Toggle("IsOn", isOn: $appState.isOn)
+            
+//            Button("Toggle") {
+//                appState.isOn.toggle()
+//            }
         }
     }
 }
@@ -50,7 +64,7 @@ struct LightRoomView: View {
 // parent view: as it uses the child view
 struct ContentView: View {
     
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState: AppState
     
     var body: some View {
         VStack {
@@ -64,5 +78,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }
